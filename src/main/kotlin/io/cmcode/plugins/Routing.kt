@@ -2,6 +2,7 @@ package io.cmcode.plugins
 
 import io.cmcode.routes.createRoomRoute
 import io.cmcode.routes.getRoomsRoute
+import io.cmcode.routes.joinRoomRoute
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.request.*
@@ -12,5 +13,6 @@ fun Application.configureRouting() {
     install(Routing) {
         createRoomRoute()
         getRoomsRoute()
+        joinRoomRoute()
     }
 }

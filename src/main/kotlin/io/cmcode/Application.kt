@@ -1,5 +1,6 @@
 package io.cmcode
 
+import com.google.gson.Gson
 import io.cmcode.plugins.*
 import io.cmcode.session.DrawingSession
 import io.ktor.application.*
@@ -14,6 +15,7 @@ fun main() {
 }
 
 val server = DrawingServer()
+val gson = Gson()
 
 fun Application.module() {
     configureSession()
