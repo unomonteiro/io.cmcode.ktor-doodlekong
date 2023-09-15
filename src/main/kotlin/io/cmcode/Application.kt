@@ -9,9 +9,11 @@ import io.ktor.sessions.*
 import io.ktor.util.*
 
 fun main() {
-    embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
+    embeddedServer(Netty, port = 8001, host = "0.0.0.0", module = Application::module)
         .start(wait = true)
 }
+
+val server = DrawingServer()
 
 fun Application.module() {
     configureSession()
@@ -21,8 +23,8 @@ fun Application.module() {
             call.sessions.set(DrawingSession(clientId, generateNonce()))
         }
     }
-    configureSerialization()
     configureSockets()
-    configureMonitoring()
+    configureSerialization()
     configureRouting()
+    configureMonitoring()
 }

@@ -12,9 +12,11 @@ fun Application.configureSerialization() {
         gson {
             }
     }
-    routing {
+
+    /*routing {
         get("/json/gson") {
                 call.respond(mapOf("hello" to "world"))
             }
-    }
+    }*/
+
 }
