@@ -1,6 +1,7 @@
 package io.cmcode.plugins
 
 import io.cmcode.routes.createRoomRoute
+import io.cmcode.routes.gameWebSocketRoute
 import io.cmcode.routes.getRoomsRoute
 import io.cmcode.routes.joinRoomRoute
 import io.ktor.application.*
@@ -14,5 +15,6 @@ fun Application.configureRouting() {
         createRoomRoute()
         getRoomsRoute()
         joinRoomRoute()
+        gameWebSocketRoute()
     }
 }
