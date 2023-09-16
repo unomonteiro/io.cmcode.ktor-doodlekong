@@ -1,10 +1,11 @@
 package io.cmcode.data
 
 import io.cmcode.data.Room.Phase.*
-import io.cmcode.data.models.Announcement
-import io.cmcode.data.models.ChosenWord
-import io.cmcode.data.models.PhaseChange
+import io.cmcode.data.models.*
 import io.cmcode.gson
+import io.cmcode.utils.getRandomWords
+import io.cmcode.utils.transformToUnderscores
+import io.cmcode.utils.words
 import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.*
 
@@ -18,6 +19,8 @@ data class Room(
     private var drawingPlayer: Player? = null
     private var winningPlayers = listOf<String>()
     private var word: String? = null
+    private var curWords: List<String>? = null
+    private var drawingPlayerIndex = 0
 
     private var phaseChangedListener: ((Phase) -> Unit)? = null
     var phase = WAITING_FOR_PLAYERS
@@ -144,11 +147,38 @@ data class Room(
     }
 
     private fun newRound() {
-
+        curWords = getRandomWords(3)
+        val newWords = NewWords(curWords!!)
+        nextDrawingPlayer()
+        GlobalScope.launch {
+            drawingPlayer?.socket?.send(Frame.Text(gson.toJson(newWords)))
+            timeAndNotify(DELAY_NEW_ROUND_TO_GAME_RUNNING)
+        }
     }
 
     private fun gameRunning() {
+        winningPlayers = listOf()
+        var wordToSend = word ?: curWords?.random() ?: words.random()
+        val wordWithUnderscores = wordToSend.transformToUnderscores()
+        val drawingUsername = (drawingPlayer ?: players.random()).username
+        val gameStateForDrawingPlayer = GameState(
+            drawingUsername,
+            wordToSend
+        )
+        val gameStateForguessingPlayers = GameState(
+            drawingUsername,
+            wordWithUnderscores
+        )
+        GlobalScope.launch {
+            broadcastToAllExcept(
+                gson.toJson(gameStateForguessingPlayers),
+                drawingPlayer?.clientId ?: players.random().clientId
+            )
+            drawingPlayer?.socket?.send(Frame.Text(gson.toJson(gameStateForDrawingPlayer)))
 
+            timeAndNotify(DELAY_GAME_RUNNING_TO_SHOW_WORD)
+            println("Drawing phase in room $name started. It'll last ${DELAY_GAME_RUNNING_TO_SHOW_WORD / 1000}s")
+        }
     }
 
     private fun showWord() {
@@ -167,6 +197,25 @@ data class Room(
             broadcast(gson.toJson(phaseChange))
 
         }
+    }
+
+    fun solution(first: List<Int>, second: List<Int>): MutableList<Int> {
+        // put your code here
+        return first.plus(second).toMutableList()
+    }
+
+    private fun nextDrawingPlayer() {
+        drawingPlayer?.isDrawing = false
+        if (players.isEmpty()) {
+            return
+        }
+
+        drawingPlayer = if (drawingPlayerIndex <= players.size - 1) {
+            players[drawingPlayerIndex]
+        } else players.last()
+
+        if (drawingPlayerIndex < players.size - 1)  drawingPlayerIndex++
+        else drawingPlayerIndex = 0
     }
 
     enum class Phase {

@@ -11,6 +11,7 @@ import io.cmcode.utils.Constants.TYPE_ANNOUNCEMENT
 import io.cmcode.utils.Constants.TYPE_CHAT_MESSAGE
 import io.cmcode.utils.Constants.TYPE_CHOSEN_WORD
 import io.cmcode.utils.Constants.TYPE_DRAW_DATA
+import io.cmcode.utils.Constants.TYPE_GAME_STATE
 import io.cmcode.utils.Constants.TYPE_JOIN_ROOM_HANDSHAKE
 import io.cmcode.utils.Constants.TYPE_PHASE_CHANGE
 import io.ktor.http.cio.websocket.*
@@ -86,6 +87,7 @@ fun Route.standardWebSocket(
                         TYPE_JOIN_ROOM_HANDSHAKE -> JoinRoomHandshake::class.java
                         TYPE_PHASE_CHANGE -> PhaseChange::class.java
                         TYPE_CHOSEN_WORD -> ChosenWord::class.java
+                        TYPE_GAME_STATE -> GameState::class.java
                         else -> BaseModel::class.java
                     }
                     val payload = gson.fromJson(message, type)
