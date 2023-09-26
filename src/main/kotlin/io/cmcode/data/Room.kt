@@ -256,6 +256,32 @@ data class Room(
         return false
     }
 
+    private suspend fun sendWordToPlayer(player: Player) {
+        val delay = when (phase) {
+            WAITING_FOR_START -> DELAY_WAITING_FOR_START_TO_NEW_ROUND
+            NEW_ROUND -> DELAY_NEW_ROUND_TO_GAME_RUNNING
+            GAME_RUNNING -> DELAY_GAME_RUNNING_TO_SHOW_WORD
+            SHOW_WORD -> DELAY_SHOW_WORD_TO_NEW_ROUND
+            //WAITING_FOR_PLAYERS ->
+            else -> 0L
+        }
+        val phaseChange = PhaseChange(phase, delay, drawingPlayer?.username)
+
+        word?.let { curWord ->
+            drawingPlayer?.let { drawingPlayer ->
+                val gameState = GameState(
+                    drawingPlayer.username,
+                    if (player.isDrawing || phase == SHOW_WORD) {
+                        curWord
+                    } else {
+                        curWord.transformToUnderscores()
+                    }
+                )
+                player.socket.send(Frame.Text(gson.toJson(gameState)))
+            }
+        }
+    }
+
     private fun nextDrawingPlayer() {
         drawingPlayer?.isDrawing = false
         if (players.isEmpty()) {
