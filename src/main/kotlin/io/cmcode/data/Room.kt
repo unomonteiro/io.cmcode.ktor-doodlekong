@@ -280,6 +280,7 @@ data class Room(
                 player.socket.send(Frame.Text(gson.toJson(gameState)))
             }
         }
+        player.socket.send(Frame.Text(gson.toJson(phaseChange)))
     }
 
     private fun nextDrawingPlayer() {
