@@ -30,6 +30,7 @@ data class Room(
     private val leftPlayers = ConcurrentHashMap<String, Pair<Player, Int>>()
 
     private var curRoundDrawData: List<String> = listOf()
+    var lastDrawData: DrawData? = null
 
     private var phaseChangedListener: ((Phase) -> Unit)? = null
     var phase = WAITING_FOR_PLAYERS
@@ -69,6 +70,14 @@ data class Room(
         curRoundDrawData = curRoundDrawData + drawAction
     }
 
+    private suspend fun finishOffDrawing() {
+        lastDrawData?.let {
+            if (curRoundDrawData.isNotEmpty() && it.motionEvent == ACTION_MOVE) {
+                val finishDrawData = it.copy(motionEvent = ACTION_UP)
+                broadcast(gson.toJson(finishDrawData))
+            }
+        }
+    }
     suspend fun addPlayer(clientId: String, username: String, socket: WebSocketSession): Player {
         var indexToAdd = players.size - 1
         val player = if (leftPlayers.contains(clientId)) {
@@ -97,7 +106,7 @@ data class Room(
 
         if (players.size == 1) {
             phase = WAITING_FOR_PLAYERS
-        } else if (players.size == 2 && phase == WAITING_FOR_PLAYERS) {
+        } else if (players.size == ACTION_MOVE && phase == WAITING_FOR_PLAYERS) {
             phase = WAITING_FOR_START
             players = players.shuffled()
         } else if (phase == WAITING_FOR_START && players.size == maxPlayers) {
@@ -170,9 +179,15 @@ data class Room(
             }
             phase = when (phase) {
                 WAITING_FOR_START -> NEW_ROUND
-                GAME_RUNNING -> SHOW_WORD
+                GAME_RUNNING -> {
+                    finishOffDrawing()
+                    SHOW_WORD
+                }
                 SHOW_WORD -> NEW_ROUND
-                NEW_ROUND -> GAME_RUNNING
+                NEW_ROUND -> {
+                    word = null
+                    GAME_RUNNING
+                }
                 else -> WAITING_FOR_PLAYERS
             }
         }
@@ -412,5 +427,8 @@ data class Room(
         const val GUESSED_SCORE_DEFAULT = 50
         const val GUESSED_SCORE_PERCENTAGE_MULTIPLIER = 50
         const val GUESSED_SCORE_FOR_DRAWING_PLAYER = 50
+
+        const val ACTION_MOVE = 2
+        const val ACTION_UP = 1
     }
 }

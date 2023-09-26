@@ -57,6 +57,7 @@ fun Route.gameWebSocketRoute() {
                         room.broadcastToAllExcept(message, clientId)
                         room.addSerializedDrawInfo(message)
                     }
+                    room.lastDrawData = payload
                 }
                 is DrawAction  -> {
                     val room = server.getRoomWithClientId(clientId) ?: return@standardWebSocket

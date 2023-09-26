@@ -43,7 +43,8 @@ fun Route.createRoomRoute() {
             }
             val room = Room(
                 roomRequest.name,
-                roomRequest.maxPlayers
+                roomRequest.maxPlayers,
+                ACTION_MOVE = 2
             )
             server.rooms[roomRequest.name] = room
             println("Room created: ${roomRequest.name}")
