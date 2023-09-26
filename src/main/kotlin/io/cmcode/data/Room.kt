@@ -71,9 +71,17 @@ data class Room(
             System.currentTimeMillis(),
             Announcement.TYPE_PLAYER_JOINED
         )
+        sendWordToPlayer(player)
+        broadcastPlayersStates()
         broadcast(gson.toJson(announcement))
 
         return player
+    }
+
+    fun removePlayer(clientId: String) {
+        GlobalScope.launch {
+            broadcastPlayersStates()
+        }
     }
 
     private fun timeAndNotify(ms: Long) {
@@ -160,6 +168,7 @@ data class Room(
         val newWords = NewWords(curWords!!)
         nextDrawingPlayer()
         GlobalScope.launch {
+            broadcastPlayersStates()
             drawingPlayer?.socket?.send(Frame.Text(gson.toJson(newWords)))
             timeAndNotify(DELAY_NEW_ROUND_TO_GAME_RUNNING)
         }
@@ -197,6 +206,7 @@ data class Room(
                     it.score -= PENALTY_NOBODY_GUESSED_IT
                 }
             }
+            broadcastPlayersStates()
             word?.let {
                 val chosenWord = ChosenWord(it, name)
                 broadcast(gson.toJson(chosenWord))
@@ -222,7 +232,7 @@ data class Room(
         return false
     }
 
-    suspend fun checkWordAndNotifiPlayers(message: ChatMessage): Boolean {
+    suspend fun checkWordAndNotifyPlayers(message: ChatMessage): Boolean {
         if (isGuessCorrect(message)) {
             val guessingTime = System.currentTimeMillis() - startTime
             val timePercentageLeft = 1f - guessingTime.toFloat() / DELAY_GAME_RUNNING_TO_SHOW_WORD
@@ -235,6 +245,7 @@ data class Room(
             drawingPlayer?.let {
                 it.score += GUESSED_SCORE_FOR_DRAWING_PLAYER / players.size
             }
+            broadcastPlayersStates()
 
             val announcement = Announcement(
                 "${message.from} has guessed it!",
@@ -254,6 +265,16 @@ data class Room(
             return true
         }
         return false
+    }
+
+    private suspend fun broadcastPlayersStates() {
+        val playersList = players.sortedByDescending { it.score }.map {
+            PlayerData(it.username, it.isDrawing, it.rank)
+        }
+        playersList.forEachIndexed { index, playerData ->
+            playerData.rank = index + 1
+        }
+        broadcast(gson.toJson(PlayersList(playersList)))
     }
 
     private suspend fun sendWordToPlayer(player: Player) {

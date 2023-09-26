@@ -55,7 +55,7 @@ fun Route.gameWebSocketRoute() {
                 }
                 is ChatMessage -> {
                     val room = server.rooms[payload.roomName] ?: return@standardWebSocket
-                    if (!room.checkWordAndNotifiPlayers(payload)) {
+                    if (!room.checkWordAndNotifyPlayers(payload)) {
                         room.broadcast(message)
                     }
                 }
